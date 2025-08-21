@@ -1,0 +1,101 @@
+import React, { useState } from 'react';
+import { useBooking } from '@/context/BookingContext';
+import { useUser } from '@/context/UserContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { format } from 'date-fns';
+import { Clock, MapPin, MessageSquare, ChevronRight, X, Check } from 'lucide-react';
+import { BookingStatus } from '@/types/booking';
+import { BookingDetail } from '../booking/BookingDetail';
+
+export default function UserBookings() {
+  const { user } = useUser();
+  const { bookings, getBookingsByStatus, respondToProposal, cancelBooking } = useBooking();
+  const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('upcoming');
+  
+  // Get bookings by status
+  const pendingBookings = getBookingsByStatus('pending');
+  const confirmedBookings = getBookingsByStatus('confirmed');
+  const modifiedBookings = getBookingsByStatus('modified');
+  const upcomingBookings = [...confirmedBookings, ...modifiedBooks].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  const completedBookings = getBookingsByStatus('completed');
+  const cancelledBookings = getBookingsByStatus('cancelled');
+
+  // ... (rest of the component remains the same)
+  
+  return (
+    <div className="container mx-auto p-6">
+      <Dialog open={!!selectedBooking} onOpenChange={(open) => !open && setSelectedBooking(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedBooking && (
+            <BookingDetail 
+              bookingId={selectedBooking} 
+              onBack={() => setSelectedBooking(null)} 
+              showChat={true} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">My Bookings</h1>
+        <p className="text-muted-foreground">View and manage your scheduled sessions</p>
+      </div>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="upcoming" className="space-y-4">
+          {upcomingBookings.length > 0 ? (
+            upcomingBookings.map(booking => renderBookingCard(booking))
+          ) : (
+            <div className="text-center py-12 border rounded-lg">
+              <p className="text-muted-foreground">No upcoming bookings</p>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="pending" className="space-y-4">
+          {pendingBookings.length > 0 ? (
+            pendingBookings.map(booking => renderBookingCard(booking))
+          ) : (
+            <div className="text-center py-12 border rounded-lg">
+              <p className="text-muted-foreground">No pending bookings</p>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="completed" className="space-y-4">
+          {completedBookings.length > 0 ? (
+            completedBookings.map(booking => renderBookingCard(booking))
+          ) : (
+            <div className="text-center py-12 border rounded-lg">
+              <p className="text-muted-foreground">No completed bookings</p>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="cancelled" className="space-y-4">
+          {cancelledBookings.length > 0 ? (
+            cancelledBookings.map(booking => renderBookingCard(booking))
+          ) : (
+            <div className="text-center py-12 border rounded-lg">
+              <p className="text-muted-foreground">No cancelled bookings</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
